@@ -16,8 +16,18 @@ public class MovesReader : MonoBehaviour
 
     private SerializablePosition startPosition;
 
+    private bool shouldSave = false;
+
     private void Start()
     {
+        GameStateManager.OnStarted.AddListener(onGameStarted);
+        GameStateManager.OnEnded.AddListener(onGameEnded);
+    }
+
+    private void onGameStarted()
+    {
+        shouldSave = true;
+
         timecode_saves = new List<double>();
         velocity_saves = new List<SerializablePosition>();
         startKey = System.DateTime.Now;
@@ -26,13 +36,24 @@ public class MovesReader : MonoBehaviour
 
         startPosition = new SerializablePosition(ReadingRB.position, ReadingRB.rotation);
 
-        saveCurrentVelocity();
+        StartCoroutine(saveVelocity());
     }
 
-    private void FixedUpdate()
+    private void onGameEnded()
     {
-        if (ReadingRB.velocity != previousVelocity || ReadingRB.rotation != previousRotation)
-            saveCurrentVelocity();
+        shouldSave = false;
+    }
+
+    private IEnumerator saveVelocity()
+    {
+        while(shouldSave)
+        {
+            if (ReadingRB.velocity != previousVelocity || ReadingRB.rotation != previousRotation)
+                saveCurrentVelocity();
+            yield return new WaitForFixedUpdate();
+        }
+
+        saveToFile();
     }
 
     private void saveCurrentVelocity()
@@ -50,7 +71,7 @@ public class MovesReader : MonoBehaviour
         previousKey = System.DateTime.Now;
     }
 
-    private void OnApplicationQuit()
+    private void saveToFile()
     {
         Moves moves = new Moves(timecode_saves.ToArray(), velocity_saves.ToArray(), startPosition);
         Debug.Log(moves.timecodes.Length + " for " + (System.DateTime.Now - startKey).TotalSeconds + " seconds");

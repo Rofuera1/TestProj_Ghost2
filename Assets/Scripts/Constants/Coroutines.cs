@@ -454,10 +454,11 @@ public class Coroutines : MonoBehaviour
         }
     }
 
-    public static IEnumerator LerpTransformScaleRealTime(Transform objectTR, Vector3 endScale, float time, FunctionToLerp smoothFunc, bool enabledOnEnd = true, float timeToWait = 0.0f)
+    public static IEnumerator LerpTransformScaleRealTime(Transform objectTR, Vector3 startScale, Vector3 endScale, float time, FunctionToLerp smoothFunc, bool enabledOnEnd = true, float timeToWait = 0.0f)
     {
+        objectTR.localScale = startScale;
         yield return new WaitForSecondsRealtime(timeToWait);
-        Vector3 startScale = objectTR.transform.localScale;
+        objectTR.gameObject.SetActive(true);
         float t = 0f;
 
         while (t < time)
